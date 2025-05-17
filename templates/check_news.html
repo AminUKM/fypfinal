@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Check News - Trustify</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="picture/Trustify.ico">
+
+  <!-- Chart.js & Plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
+  <style>
+    body {
+      background-color: #5b57a5;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      color: #fff;
+    }
+    .container {
+  padding: 50px 20px 0 20px; /* top, right, bottom, left */
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+
+    h1 {
+      font-size: 2.8em;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      font-size: 1.3em;
+      margin-top: -10px;
+    }
+    .input-wrapper {
+  max-width: 95%;
+  margin: 0 auto;
+}
+
+    .input-section {
+  margin: 30px auto;
+  text-align: left;
+  background-color: #6c69b5;
+  padding: 30px 30px; /* Add left and right padding here */
+  border-radius: 10px;
+}
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 15px;
+    }
+    input[type="text"], textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 5px;
+  border: none;
+  font-size: 1em;
+  margin-top: 5px;
+  resize: vertical;
+  font-family: Arial, sans-serif; /* Applies Arial to both inputs */
+}
+
+
+    .button {
+      background-color: #f4b400;
+      color: #000;
+      border: none;
+      padding: 15px 30px;
+      margin: 20px auto;
+      border-radius: 10px;
+      font-size: 1.2em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      display: block;
+    }
+    .button:hover {
+      background-color: #d79900;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+      background-color: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 16px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f4b400;
+      color: #000;
+    }
+    td {
+      color: #333;
+    }
+    #confidence-chart {
+      max-width: 420px;
+      margin: 40px auto 10px auto;
+      display: none;
+      background: #fff;
+      padding: 15px;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    #prediction-result {
+      font-size: 1.4em;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Check News</h1>
+    <p class="subtitle">Enter a news article to detect its authenticity</p>
+
+    <div class="input-section">
+  <div class="input-wrapper">
+    <label for="news-title">News Title:</label>
+    <input type="text" id="news-title" placeholder="Enter news title here">
+
+    <label for="news-content">News Content:</label>
+    <textarea id="news-content" rows="6" placeholder="Enter news content here"></textarea>
+
+    <button class="button" onclick="checkNews()">Check</button>
+  </div>
+</div>
+
+
+    <table id="news-table" style="display:none;">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Content</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td id="display-title"></td>
+          <td id="display-content"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div id="confidence-chart-container">
+      <canvas id="confidence-chart"></canvas>
+    </div>
+
+    <p id="prediction-result"></p>
+
+    <button class="button" onclick="window.location.href='index.html'">⬅️ Back to Main Menu</button>
+  </div>
+
+  <script>
+    function checkNews() {
+  const title = document.getElementById("news-title").value.trim();
+  const content = document.getElementById("news-content").value.trim();
+
+  if (!title || !content) {
+    alert("Please fill in both the title and content.");
+    return;
+  }
+
+  fetch("/predict", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ title, content })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.error) {
+      alert(data.error);
+      return;
+    }
+
+    const predictionText = data.prediction;
+    const fakeConfidence = data.confidence_fake;
+    const trueConfidence = data.confidence_true;
+
+    document.getElementById("news-table").style.display = "table";
+    document.getElementById("display-title").innerText = title;
+    document.getElementById("display-content").innerText = content;
+
+    document.getElementById("prediction-result").innerText = `The news is likely ${predictionText}`;
+
+    const ctx = document.getElementById('confidence-chart').getContext('2d');
+    document.getElementById('confidence-chart').style.display = "block";
+
+    if (window.pieChart) window.pieChart.destroy();
+
+    window.pieChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Fake', 'True'],
+        datasets: [{
+          data: [fakeConfidence, trueConfidence],
+          backgroundColor: [
+            'rgba(229, 57, 53, 0.9)',
+            'rgba(67, 160, 71, 0.9)'
+          ],
+          borderColor: '#fff',
+          borderWidth: 2,
+          hoverOffset: 16
+        }]
+      },
+      options: {
+        responsive: true,
+        cutout: '55%',
+        plugins: {
+          datalabels: {
+            color: '#fff',
+            font: {
+              size: 16,
+              weight: 'bold'
+            },
+            formatter: (value) => value + '%'
+          },
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: '#fff',
+              font: { size: 14 }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `${context.label}: ${context.parsed}%`;
+              }
+            }
+          },
+          title: {
+            display: true,
+            text: 'Confidence Level',
+            color: '#333',
+            font: {
+              size: 20,
+              weight: 'bold'
+            }
+          }
+        },
+        animation: {
+          animateRotate: true,
+          duration: 1800,
+          easing: 'easeOutBounce'
+        }
+      },
+      plugins: [ChartDataLabels]
+    });
+  })
+  .catch(error => {
+    alert("An error occurred during prediction.");
+    console.error("Prediction error:", error);
+  });
+}
+
+  </script>
+</body>
+</html>

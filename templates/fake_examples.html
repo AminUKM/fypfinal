@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fake News Examples - Trustify</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="picture/Trustify.ico">
+  
+  <!-- External Library: PapaParse -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+  <style>
+    body {
+      background-color: #5b57a5;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      color: #fff;
+    }
+    .container {
+      padding-top: 60px;
+    }
+    h1 {
+      color: white;
+      font-size: 2.8em;
+      margin-top: 20px;
+    }
+    .subtitle {
+      color: #f0f0f0;
+      font-size: 1.3em;
+      margin-top: -10px;
+    }
+    .button {
+      background-color: #f4b400;
+      color: #000;
+      border: none;
+      padding: 15px 30px;
+      margin: 15px auto;
+      border-radius: 10px;
+      font-size: 1.2em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      width: 260px;
+      display: block;
+    }
+    .button:hover {
+      background-color: #d79900;
+    }
+
+    /* Table Styling */
+    table {
+      width: 80%;
+      margin-top: 20px;
+      margin-left: auto;
+      margin-right: auto;
+      border-collapse: collapse;
+      border-radius: 10px;
+      overflow: hidden;
+      background-color: #fff;
+    }
+    th, td {
+      padding: 16px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f4b400;
+      color: #000;
+      font-size: 1.1em;
+    }
+    td {
+      color: #333;
+      font-size: 1em;
+    }
+    tr:hover {
+      background-color: #f0f0f0;
+    }
+
+    td p {
+      margin: 10px;
+      text-align: left;
+      line-height: 1.6;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    /* Pagination Styling */
+    .pagination {
+      margin-top: 40px;
+      margin-bottom: 40px;
+      display: flex;
+      justify-content: center;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+    .pagination button,
+    .pagination span {
+      background-color: #f4b400;
+      color: #000;
+      border: none;
+      padding: 10px 15px;
+      font-size: 1em;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+    .pagination button:hover {
+      background-color: #d79900;
+    }
+    .pagination .active {
+      background-color: #d79900;
+      font-weight: bold;
+    }
+    .pagination span {
+      background-color: transparent;
+      color: #fff;
+      cursor: default;
+      padding: 10px 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Fake News Examples</h1>
+    <p class="subtitle">Examples of Fake News Detected by Trustify</p>
+
+    <!-- Back Button -->
+    <button class="button" onclick="window.history.back()">⬅️ Back to Main Menu</button>
+
+    <!-- Table to display fake news -->
+    <table id="fake-news-table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Text</th>
+        </tr>
+      </thead>
+      <tbody id="fake-news-body"></tbody>
+    </table>
+
+    <!-- Pagination Buttons -->
+    <div class="pagination" id="pagination-buttons"></div>
+  </div>
+
+  <script>
+    let currentPage = 1;
+    const rowsPerPage = 10;
+    let fakeNewsData = [];
+    const maxPagesToShow = 5;
+
+    function loadFakeNews() {
+      Papa.parse('https://raw.githubusercontent.com/AminUKM/FakeNewsDatasets/main/Fake_Reduced.csv', {
+        download: true,
+        header: true,
+        dynamicTyping: true,
+        complete: function(results) {
+          fakeNewsData = results.data.filter(item => item.title && item.text); // Remove empty entries
+          displayPage(currentPage);
+          setupPagination();
+        }
+      });
+    }
+
+    function displayPage(page) {
+      const start = (page - 1) * rowsPerPage;
+      const end = start + rowsPerPage;
+      const dataToDisplay = fakeNewsData.slice(start, end);
+      const tableBody = document.getElementById('fake-news-body');
+      tableBody.innerHTML = '';
+
+      dataToDisplay.forEach(news => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${news.title}</td>
+          <td><p>${news.text}</p></td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    function setupPagination() {
+      const totalPages = Math.ceil(fakeNewsData.length / rowsPerPage);
+      const paginationDiv = document.getElementById('pagination-buttons');
+      paginationDiv.innerHTML = '';
+
+      function createPageButton(label, page, isActive = false, isDisabled = false) {
+        const button = document.createElement('button');
+        button.textContent = label;
+        if (isActive) button.classList.add('active');
+        if (isDisabled) button.disabled = true;
+        button.onclick = () => {
+          if (!isDisabled) {
+            currentPage = page;
+            displayPage(currentPage);
+            setupPagination();
+          }
+        };
+        return button;
+      }
+
+      // First and Prev
+      paginationDiv.appendChild(createPageButton('« First', 1, false, currentPage === 1));
+      paginationDiv.appendChild(createPageButton('‹ Prev', currentPage - 1, false, currentPage === 1));
+
+      let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+      let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+      if (endPage - startPage + 1 < maxPagesToShow) {
+        startPage = Math.max(1, endPage - maxPagesToShow + 1);
+      }
+
+      if (startPage > 1) {
+        paginationDiv.appendChild(createPageButton('1', 1));
+        if (startPage > 2) {
+          const dots = document.createElement('span');
+          dots.textContent = '...';
+          paginationDiv.appendChild(dots);
+        }
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        paginationDiv.appendChild(createPageButton(i, i, i === currentPage));
+      }
+
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          const dots = document.createElement('span');
+          dots.textContent = '...';
+          paginationDiv.appendChild(dots);
+        }
+        paginationDiv.appendChild(createPageButton(totalPages, totalPages));
+      }
+
+      // Next and Last
+      paginationDiv.appendChild(createPageButton('Next ›', currentPage + 1, false, currentPage === totalPages));
+      paginationDiv.appendChild(createPageButton('Last »', totalPages, false, currentPage === totalPages));
+    }
+
+    window.onload = loadFakeNews;
+  </script>
+</body>
+</html>
