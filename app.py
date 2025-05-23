@@ -1,28 +1,30 @@
-import os
-import random
-print("Current working directory:", os.getcwd())
-
 from flask import Flask, request, jsonify, render_template
 import logging
 import pandas as pd
 from pycaret.classification import load_model, predict_model
 import traceback
+import random
 
 app = Flask(__name__)
 
-# ✅ Load PyCaret model
-try:
-    model = load_model("fake_news_model")  # No .pkl extension
-except Exception as e:
-    print("Model loading failed:", e)
-    raise
+# Load the trained PyCaret model
+model = load_model("fake_news_model")
 
-# ✅ Setup logging
+# Logging
 logging.basicConfig(filename='logs.log', level=logging.INFO)
 
 @app.route('/')
-def index():
+@app.route('/index.html')
+def home():
+    return render_template("index.html")  # Start from index
+
+@app.route('/check_news')
+def check_news():
     return render_template("check_news.html")
+
+@app.route('/fake_examples')
+def fake_examples():
+    return render_template("fake_examples.html")
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -38,13 +40,12 @@ def predict():
         df = pd.DataFrame([{"text": full_text}])
         pred_df = predict_model(model, data=df)
 
-        # Use the correct column name for label
         label_col = 'prediction_label' if 'prediction_label' in pred_df.columns else 'Label'
         label_num = pred_df[label_col][0]
         label = "fake" if label_num == 0 else "true"
         is_fake = label.lower() == "fake"
 
-        # Assign random confidence
+        # Confidence simulation
         if not is_fake:
             confidence_true = random.randint(80, 100)
             confidence_fake = 100 - confidence_true
@@ -59,8 +60,10 @@ def predict():
             "confidence_fake": confidence_fake,
             "confidence_true": confidence_true
         })
-
     except Exception as e:
         logging.error(f"Error in prediction: {str(e)}")
         logging.error(traceback.format_exc())
         return jsonify({"error": "Prediction failed"}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
