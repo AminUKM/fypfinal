@@ -6,7 +6,7 @@
   <title>Trustify - Fake News Detection</title>
   
   <!-- Favicon -->
-  <link rel="icon" type="image/x-icon" href="picture/Trustify.ico">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='picture/Trustify.ico') }}">
   
   <style>
     body {
@@ -55,7 +55,7 @@
 <body>
   <div class="container">
     <!-- Trustify Logo -->
-    <img src="picture/Trustify.jpg" alt="Trustify Logo" class="logo" />
+    <img src="{{ url_for('static', filename='picture/Trustify.jpg') }}" alt="Trustify Logo" class="logo" />
 
     <!-- Main Title -->
     <h1>Welcome to Trustify</h1>
@@ -64,8 +64,8 @@
     <p class="subtitle">Your Fake News Detection Application</p>
 
     <!-- Buttons -->
-    <button class="button" onclick="location.href='check_news'">📰 Check News</button>
-    <button class="button" onclick="location.href='fake_examples'">📂 View Fake News Examples</button>
+    <button class="button" onclick="location.href='/check_news'">📰 Check News</button>
+    <button class="button" onclick="location.href='/fake_examples'">📂 View Fake News Examples</button>
   </div>
 </body>
 </html>
