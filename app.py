@@ -10,9 +10,9 @@ import traceback
 
 app = Flask(__name__)
 
-# ✅ Load PyCaret model (model must be saved with save_model("fake_news_model"))
+# ✅ Load PyCaret model
 try:
-    model = load_model("fake_news_model")  # no .pkl
+    model = load_model("fake_news_model")  # No .pkl extension
 except Exception as e:
     print("Model loading failed:", e)
     raise
@@ -37,8 +37,6 @@ def predict():
     try:
         df = pd.DataFrame([{"text": full_text}])
         pred_df = predict_model(model, data=df)
-        print("Prediction columns:", pred_df.columns)
-        print(pred_df.head())
 
         # Use the correct column name for label
         label_col = 'prediction_label' if 'prediction_label' in pred_df.columns else 'Label'
@@ -61,11 +59,8 @@ def predict():
             "confidence_fake": confidence_fake,
             "confidence_true": confidence_true
         })
+
     except Exception as e:
         logging.error(f"Error in prediction: {str(e)}")
         logging.error(traceback.format_exc())
         return jsonify({"error": "Prediction failed"}), 500
-
-if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5000, debug=True)
-
