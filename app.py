@@ -16,7 +16,7 @@ logging.basicConfig(filename='logs.log', level=logging.INFO)
 @app.route('/')
 @app.route('/index.html')
 def home():
-    return render_template("index.html")  # Start from index
+    return render_template("index.html")
 
 @app.route('/check_news')
 def check_news():
