@@ -22,7 +22,7 @@
     .logo {
       width: 300px;
       height: 300px;
-      object-fit: contain;  /* keeps aspect ratio, fits inside 300x300 */
+      object-fit: contain;
       margin: 0 auto;
       display: block;
       margin-bottom: 20px;
@@ -59,7 +59,8 @@
 <body>
   <div class="container">
     <!-- Trustify Logo -->
-    <img src="{{ url_for('static', filename='picture/Trustify.jpg') }}" alt="Trustify Logo" />
+    <img class="logo" src="{{ url_for('static', filename='picture/Trustify.jpg') }}" alt="Trustify Logo" />
+
 
     <!-- Main Title -->
     <h1>Welcome to Trustify</h1>
